@@ -21,7 +21,19 @@
 
 </div>
 
+
+## 📸 Screenshots
+
+<div align="center">
+<img src="docs/screenshots/2026-08-16_09-33-40.png" width="900" alt="DayzTraderLocalTool — overview">
+<br><br>
+<img src="docs/screenshots/image.png" width="900" alt="DayzTraderLocalTool — configs">
+<br><br>
+<img src="docs/screenshots/image2.png" width="900" alt="DayzTraderLocalTool — players">
+</div>
+
 ---
+
 
 ## Highlights
 
