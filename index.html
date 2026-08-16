@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DayZ Trader Local Tool</title>
+  <link rel="stylesheet" href="styles.css?v=20260815-2">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">T</div>
+        <div>
+          <h1>Trader Tool</h1>
+          <p>Локальный редактор DayZ Trader</p>
+        </div>
+      </div>
+
+      <div class="load-box" id="dropZone">
+        <input id="fileInput" type="file" multiple webkitdirectory directory hidden>
+        <button class="primary" id="openFolderBtn" type="button">Открыть папку</button>
+        <button class="secondary" id="chooseFilesBtn" type="button">Выбрать файлы</button>
+        <p>Можно перетащить сюда папку `Trader` или `.txt/.xml` файлы.</p>
+      </div>
+
+      <nav class="nav" aria-label="Разделы">
+        <button class="nav-item active" data-tab="overview" type="button">Обзор</button>
+        <button class="nav-item" data-tab="structure" type="button">Структура</button>
+        <button class="nav-item" data-tab="items" type="button">Товары</button>
+        <button class="nav-item" data-tab="traders" type="button">NPC и точки</button>
+        <button class="nav-item" data-tab="vehicles" type="button">Техника</button>
+        <button class="nav-item" data-tab="variables" type="button">Настройки</button>
+        <button class="nav-item" data-tab="issues" type="button">Ошибки</button>
+        <button class="nav-item" data-tab="guide" type="button">Гайд</button>
+      </nav>
+
+      <div class="save-box">
+        <button class="primary" id="saveBtn" type="button" disabled>Сохранить</button>
+        <button class="secondary" id="downloadBtn" type="button" disabled>Скачать файлы</button>
+        <span id="saveStatus">Файлы не загружены</span>
+      </div>
+
+      <div class="task-box">
+        <div class="task-head">
+          <strong>Журнал задач</strong>
+          <span id="taskPercent">0%</span>
+        </div>
+        <div class="progress-track" aria-label="Прогресс выполнения">
+          <div class="progress-bar" id="taskProgress"></div>
+        </div>
+        <div class="task-log" id="taskLog">
+          <div>Ожидание действия.</div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar">
+        <div>
+          <h2 id="pageTitle">Обзор</h2>
+          <p id="pageSub">Загрузите папку `@Trader\\extras\\Trader` или весь мод `@Trader`.</p>
+        </div>
+        <div class="stats">
+          <div><span id="statFiles">0</span><label>файлов</label></div>
+          <div><span id="statTraders">0</span><label>трейдеров</label></div>
+          <div><span id="statItems">0</span><label>товаров</label></div>
+          <div><span id="statIssues">0</span><label>проблем</label></div>
+        </div>
+      </header>
+
+      <section class="tab-panel active" id="tab-overview">
+        <div class="toolbar">
+          <button class="secondary" id="analyzeSampleBtn" type="button">Загрузить пример из @Trader</button>
+          <button class="secondary" id="runAnalysisBtn" type="button" disabled>Проверить заново</button>
+        </div>
+        <div class="grid two">
+          <section class="panel">
+            <h3>Найденные файлы</h3>
+            <div id="fileList" class="list empty">Пока ничего не загружено.</div>
+          </section>
+          <section class="panel">
+            <h3>Что программа поняла</h3>
+            <div id="summaryList" class="list empty">После загрузки здесь появится структура трейдера.</div>
+          </section>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="tab-structure">
+        <div class="toolbar compact">
+          <button class="primary" id="normalizeIdsBtn" type="button">Нормализовать ID</button>
+          <button class="secondary" id="sortByIdBtn" type="button">Сортировать по ID</button>
+          <button class="secondary" id="createVehicleTraderBtn" type="button">Создать Vehicle Trader</button>
+          <button class="secondary" id="moveVehicleCategoriesBtn" type="button">Перенести категории техники</button>
+        </div>
+        <div class="hint">ID зависит от порядка блоков <code>&lt;Trader&gt;</code>. При переносе ID программа пересчитывает товары и marker в <code>TraderObjects.txt</code>.</div>
+        <div class="table-wrap">
+          <table class="data-table structure-table" id="structureTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Трейдер</th>
+                <th>Файл</th>
+                <th>Категории</th>
+                <th>Товары</th>
+                <th>Карта</th>
+                <th>Действия</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="tab-items">
+        <div class="toolbar compact">
+          <input id="itemSearch" type="search" placeholder="Поиск по classname, категории или трейдеру">
+          <select id="traderFilter"></select>
+          <select id="fileFilter"></select>
+          <button class="secondary" id="addTraderBtn" type="button">Новый трейдер</button>
+          <button class="secondary" id="addCategoryBtn" type="button">Новая категория</button>
+          <button class="secondary" id="autoCategoryBtn" type="button">Авто-категории</button>
+          <button class="secondary" id="moveVehiclesBtn" type="button">Вынести технику</button>
+          <button class="secondary" id="removeDuplicatesBtn" type="button">Убрать дубли</button>
+          <button class="secondary" id="bulkPricesBtn" type="button">Массовые цены</button>
+          <button class="secondary" id="showRiskyBtn" type="button">Только проблемы</button>
+          <button class="primary" id="addItemBtn" type="button">Новый товар</button>
+        </div>
+        <div class="action-strip" id="itemsActionStrip">
+          <span id="visibleItemsCount">0 товаров показано</span>
+          <button class="small-btn" id="fixVisibleSellBtn" type="button">Исправить перепродажу в видимых</button>
+          <button class="small-btn" id="sellHalfVisibleBtn" type="button">Продажа 50% в видимых</button>
+          <button class="small-btn" id="roundVisibleBtn" type="button">Округлить цены</button>
+        </div>
+        <div id="itemsHint" class="hint">Загрузите конфиги, чтобы редактировать цены и доступность покупки/продажи.</div>
+        <div class="table-wrap">
+          <table class="data-table" id="itemsTable">
+            <thead>
+              <tr>
+                <th>Trader ID</th>
+                <th>Трейдер</th>
+                <th>Категория</th>
+                <th>Classname</th>
+                <th>Кол-во</th>
+                <th>Покупка</th>
+                <th>Продажа</th>
+                <th>Совет</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="tab-traders">
+        <div class="toolbar compact">
+          <input id="markerSearch" type="search" placeholder="Поиск по ID, NPC, координатам">
+          <button class="primary" id="addMarkerBtn" type="button">Добавить точку</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="markersTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Имя трейдера</th>
+                <th>NPC/Object</th>
+                <th>Позиция трейдера</th>
+                <th>Safezone</th>
+                <th>Ориентация</th>
+                <th>Spawn техники</th>
+                <th>Вложения</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="tab-vehicles">
+        <div class="toolbar compact">
+          <input id="vehicleSearch" type="search" placeholder="Поиск техники или детали">
+          <button class="primary" id="addVehiclePartsBtn" type="button">Добавить набор деталей</button>
+          <button class="secondary" id="createMissingPartsBtn" type="button">Создать недостающие</button>
+          <button class="secondary" id="ignoreUnsoldPartsBtn" type="button">Игнорировать лишние</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="vehiclePartsTable">
+            <thead>
+              <tr>
+                <th>Техника</th>
+                <th>Детали при покупке</th>
+                <th>Файл</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="tab-variables">
+        <div class="table-wrap">
+          <table class="data-table" id="variablesTable">
+            <thead>
+              <tr>
+                <th>Параметр</th>
+                <th>Значение</th>
+                <th>Подсказка</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="tab-issues">
+        <div class="toolbar">
+          <button class="primary" id="fixSafeBtn" type="button" disabled>Исправить безопасные</button>
+          <button class="secondary" id="copyReportBtn" type="button" disabled>Скопировать отчет</button>
+          <button class="secondary" id="downloadReportBtn" type="button" disabled>Скачать отчет</button>
+        </div>
+        <div id="issuesList" class="issue-list empty">Ошибки появятся после анализа.</div>
+      </section>
+
+      <section class="tab-panel guide" id="tab-guide">
+        <div class="guide-layout">
+          <aside class="guide-menu">
+            <button class="guide-link active" data-guide="start" type="button">Быстрый старт</button>
+            <button class="guide-link" data-guide="program" type="button">Возможности программы</button>
+            <button class="guide-link" data-guide="workflow" type="button">Порядок работы</button>
+            <button class="guide-link" data-guide="buttons" type="button">Кнопки программы</button>
+            <button class="guide-link" data-guide="checks" type="button">Что проверяется</button>
+            <button class="guide-link" data-guide="format" type="button">Формат файлов</button>
+            <button class="guide-link" data-guide="ids" type="button">Структура и ID</button>
+            <button class="guide-link" data-guide="items" type="button">Товары и цены</button>
+            <button class="guide-link" data-guide="bulk" type="button">Массовые правки</button>
+            <button class="guide-link" data-guide="traders" type="button">Расстановка NPC</button>
+            <button class="guide-link" data-guide="vehicles" type="button">Техника</button>
+            <button class="guide-link" data-guide="errors" type="button">Ошибки</button>
+            <button class="guide-link" data-guide="deploy" type="button">Куда класть файлы</button>
+          </aside>
+          <article class="guide-content" id="guideContent"></article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="editDialog">
+    <form method="dialog">
+      <header>
+        <h3 id="dialogTitle">Редактирование</h3>
+        <button value="cancel" class="icon-button" aria-label="Закрыть" type="submit">X</button>
+      </header>
+      <div id="dialogBody" class="dialog-body"></div>
+      <footer>
+        <button value="cancel" class="secondary" type="submit">Отмена</button>
+        <button id="dialogOk" value="ok" class="primary" type="submit">Применить</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <template id="downloadTemplate"></template>
+  <script src="app.js?v=20260815-8"></script>
+</body>
+</html>

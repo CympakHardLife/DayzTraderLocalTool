@@ -1,0 +1,23 @@
+# OS/editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Local generated files
+*.log
+*.tmp
+*.bak
+*.backup
+*.zip
+
+# DayZ/server configs accidentally dropped into repo
+@Trader/
+TraderConfig*.txt
+TraderObjects.txt
+TraderVariables.txt
+TraderVehicleParts*.txt
+TraderAdmins.txt
+trader_types.xml
+
+!.gitignore
